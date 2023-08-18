@@ -174,10 +174,15 @@ void loop()
   }
 
   now = time(nullptr);
+  //Constantes del sensor
+  const long A = 1000;     //Resistencia en oscuridad en KΩ
+  const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
+  const int Rc = 10;       //Resistencia calibracion en KΩ
   //Lee los datos del sensor
   float h = dht.readHumidity();
   float t = dht.readTemperature();
-  float l = (analogRead(A0) * 100) / 1023;
+  float V = analogRead(A0);
+  float l = ((long)V*A*10)/((long)B*Rc*(1024-V));
   //Transforma la información a la notación JSON para poder enviar los datos 
   //El mensaje que se envía es de la forma {"value": x}, donde x es el valor de temperatura o humedad
   
