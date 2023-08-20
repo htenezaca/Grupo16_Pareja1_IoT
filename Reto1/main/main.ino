@@ -17,7 +17,7 @@ const char ssid[] = "SSID";
 const char pass[] = "PASS";
 
 //Usuario uniandes sin @uniandes.edu.co
-#define HOSTNAME "h.tenezaca"
+#define HOSTNAME "a.santamaria11"
 
 //Conexión a Mosquitto
 const char MQTT_HOST[] = "iotlab.virtual.uniandes.edu.co";
@@ -28,11 +28,11 @@ const char MQTT_USER[] = "USER";
 const char MQTT_PASS[] = "CODIGO";
 const char MQTT_SUB_TOPIC[] = HOSTNAME "/";
 //Tópico al que se enviarán los datos de humedad
-const char MQTT_PUB_TOPIC1[] = "humedad/cartagena/" HOSTNAME;
+const char MQTT_PUB_TOPIC1[] = "humedad/bogota/" HOSTNAME;
 //Tópico al que se enviarán los datos de temperatura
-const char MQTT_PUB_TOPIC2[] = "temperatura/cartagena/" HOSTNAME;
+const char MQTT_PUB_TOPIC2[] = "temperatura/bogota/" HOSTNAME;
 //Tópico al que se enviarán los datos de luminosidad
-const char MQTT_PUB_TOPIC3[] = "luminosidad/cartagena/" HOSTNAME;
+const char MQTT_PUB_TOPIC3[] = "luminosidad/bogota/" HOSTNAME;
 
 
 //////////////////////////////////////////////////////
@@ -200,11 +200,17 @@ void loop()
   json.toCharArray(payload3,json.length()+1);
 
   //Si los valores recolectados no son indefinidos, se envían a los tópicos correspondientes
-  if ( !isnan(h) && !isnan(t) ) {
+  if ( !isnan(h) ) {
     //Publica en el tópico de la humedad
     client.publish(MQTT_PUB_TOPIC1, payload1, false);
+  }
+  
+  if ( !isnan(t) ) {
     //Publica en el tópico de la temperatura
     client.publish(MQTT_PUB_TOPIC2, payload2, false);
+  }
+  
+  if ( !isnan(l) ) {
     //Publica en el tópico de la luminosidad
     client.publish(MQTT_PUB_TOPIC3, payload3, false);
   }
@@ -216,7 +222,7 @@ void loop()
   Serial.print(MQTT_PUB_TOPIC2);
   Serial.print(" -> ");
   Serial.println(payload2);
-  Serial.println(MQTT_PUB_TOPIC3);
+  Serial.print(MQTT_PUB_TOPIC3);
   Serial.print(" -> ");
   Serial.println(payload3);
   /*Espera 5 segundos antes de volver a ejecutar la función loop*/
