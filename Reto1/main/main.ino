@@ -2,11 +2,11 @@
 #include <WiFiClientSecure.h>
 #include <time.h>
 #include <PubSubClient.h>
-#include "DHT.h"
-#define DHTTYPE DHT11 // DHT 11
+#include "DHTesp.h"
+#define DHTTYPE DHTesp::DHT11 // DHT 11
 
-#define dht_dpin 4
-DHT dht(dht_dpin, DHTTYPE);
+#define DHTpin 4
+DHTesp dht;
 
 #include "secrets.h"
 
@@ -106,7 +106,7 @@ void setup()
     delay(1000);
   }
   Serial.println("connected!");
-
+  dht.setup(DHTpin, DHTTYPE);
   //Sincroniza la hora del dispositivo con el servidor SNTP (Simple Network Time Protocol)
   Serial.print("Setting time using SNTP");
   configTime(-5 * 3600, 0, "pool.ntp.org", "time.nist.gov");
@@ -179,10 +179,11 @@ void loop()
   const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
   const int Rc = 10;       //Resistencia calibracion en KΩ
   //Lee los datos del sensor
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
+  float h = dht.getHumidity();
+  float t = dht.getTemperature();
   float V = analogRead(A0);
   float l = ((long)V*A*10)/((long)B*Rc*(1024-V));
+  
   //Transforma la información a la notación JSON para poder enviar los datos 
   //El mensaje que se envía es de la forma {"value": x}, donde x es el valor de temperatura o humedad
   
