@@ -1,6 +1,6 @@
 set ant 999
 set ite 0
-battery set 100
+battery set 7
 
 atget id id
 getpos2 lonSen latSen
@@ -9,6 +9,8 @@ loop
 wait 100
 read mens
 rdata mens tipo valor
+
+printc tipo
 
 if((tipo=="hola") && (ant == 999))
    set ant valor
@@ -28,7 +30,7 @@ end
 
 if(tipo=="stop")
 	data mens "stop"
-	send mens*valor
+	send mens * valor
 	cprint "Para sensor:" id
 	wait 1000
 	stop
@@ -37,7 +39,7 @@ end
 battery bat
 if(bat<5)
 	data mens "critico" lonSen latSen
-	sebd mens ant
+	send mens *
 end
 delay 1000
 

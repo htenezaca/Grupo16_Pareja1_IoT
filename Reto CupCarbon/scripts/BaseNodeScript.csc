@@ -11,9 +11,9 @@ if( tipo == "alerta")
 end
 
 if(tipo == "critico")
-	cprint "Nodo descargado en: logitud" valor1 ",latitud:" valor 2
+	cprint "Nodo descargado en: logitud" valor1 ",latitud:" valor2
 	data p "stop"
-	send p
+	send p *
 	wait 1000
 	stop	
 end
