@@ -1,6 +1,6 @@
 set ant 999
 set ite 0
-battery set 7
+battery set 100
 
 atget id id
 getpos2 lonSen latSen
@@ -47,6 +47,6 @@ areadsensor tempSen
 rdata tempSen SensTipo idSens temp
 
 if( temp>30)
-   data mens "alerta" lonSen latSen
-   send mens ant
+	data mens "alerta" lonSen latSen
+	send mens ant
 end

@@ -18,4 +18,4 @@ if(tipo == "critico")
 	stop	
 end
 
-wait 100
+wait 1000
