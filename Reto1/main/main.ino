@@ -12,9 +12,9 @@ DHTesp dht;
 
 //Conexión a Wifi
 //Nombre de la red Wifi
-const char ssid[] = "SSID";
+const char ssid[] = "DASAI";
 //Contraseña de la red Wifi
-const char pass[] = "PASS";
+const char pass[] = "Santamaria+";
 
 //Usuario uniandes sin @uniandes.edu.co
 #define HOSTNAME "a.santamaria11"
@@ -23,9 +23,9 @@ const char pass[] = "PASS";
 const char MQTT_HOST[] = "iotlab.virtual.uniandes.edu.co";
 const int MQTT_PORT = 8082;
 //Usuario uniandes sin @uniandes.edu.co
-const char MQTT_USER[] = "USER";
+const char MQTT_USER[] = "a.santamaria11";
 //Contraseña de MQTT que recibió por correo
-const char MQTT_PASS[] = "CODIGO";
+const char MQTT_PASS[] = "201514735";
 const char MQTT_SUB_TOPIC[] = HOSTNAME "/";
 //Tópico al que se enviarán los datos de humedad
 const char MQTT_PUB_TOPIC1[] = "humedad/bogota/" HOSTNAME;
