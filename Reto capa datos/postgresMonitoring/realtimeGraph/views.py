@@ -4,6 +4,8 @@ from os import name
 import time
 
 from django.db.models.aggregates import Count
+from django.db.models import F
+from django.db.models.expressions import Func
 from realtimeMonitoring.utils import getCityCoordinates
 from typing import Dict
 import requests
@@ -585,6 +587,81 @@ def get_map_json(request, **kwargs):
 
     return JsonResponse(data_result)
 
+def get_biggest_gap(request, **kwargs):
+    data_result = {}
+
+    measureParam = kwargs.get("measure", None)
+    selectedMeasure = None
+    measurements = Measurement.objects.all()
+
+    if measureParam != None:
+        selectedMeasure = Measurement.objects.filter(name=measureParam)[0]
+    elif measurements.count() > 0:
+        selectedMeasure = measurements[0]
+
+    try:
+        limit = float(request.GET.get("limit", None))
+    except:
+        limit = 10
+
+    locations = Location.objects.all()
+    try:
+        start = datetime.fromtimestamp(
+            float(request.GET.get("from", None)) / 1000
+        )
+    except:
+        start = None
+    try:
+        end = datetime.fromtimestamp(
+            float(request.GET.get("to", None)) / 1000)
+    except:
+        end = None
+    if start == None and end == None:
+        start = datetime.now()
+        start = start - dateutil.relativedelta.relativedelta(weeks=1)
+        end = datetime.now()
+        end += dateutil.relativedelta.relativedelta(days=1)
+    elif end == None:
+        end = datetime.now()
+    elif start == None:
+        start = datetime.fromtimestamp(0)
+
+    data = []
+
+    for location in locations:
+        stations = Station.objects.filter(location=location)
+        locationData = Data.objects.filter(
+            station__in=stations, measurement__name=selectedMeasure.name,  time__gte=start.date(), time__lte=(end.date() + dateutil.relativedelta.relativedelta(days=1)))
+
+        if locationData.count() <= 0:
+            continue
+
+        processed_data = (locationData.annotate(date=Func(F('time'), function='DATE'))
+                               .values('date', 'station')
+                               .annotate(min=Min('value'), max=Max('value'), diff=Max('value')-Min('value'))
+                               .order_by('-diff')[:limit])
+
+        data.append({
+            'name': f'{location.city.name}, {location.state.name}, {location.country.name}',
+            'lat': location.lat,
+            'lng': location.lng,
+            'population': stations.count(),
+            'top_gaps': [{
+                            'diff': x['diff'],
+                            'min': x['min'],
+                            'max': x['max'],
+                            'date': x['date']
+                        } for x in processed_data]
+        })
+
+    startFormatted = start.strftime("%d/%m/%Y") if start != None else " "
+    endFormatted = end.strftime("%d/%m/%Y") if end != None else " "
+
+    data_result["start"] = startFormatted
+    data_result["end"] = endFormatted
+    data_result["data"] = data
+
+    return JsonResponse(data_result)
 
 def download_csv_data(request):
     print("Getting time for csv req")

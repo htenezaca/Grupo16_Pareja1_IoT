@@ -6,6 +6,8 @@ import time
 import tempfile
 from realtimeMonitoring.utils import getCityCoordinates
 
+from django.db.models import F
+from django.db.models.expressions import Func
 from django.template.defaulttags import register
 from django.contrib.auth import login, logout
 from realtimeGraph.forms import LoginForm
@@ -563,6 +565,88 @@ def get_map_json(request, **kwargs):
 
     return JsonResponse(data_result)
 
+def get_biggest_gap(request, **kwargs):
+    data_result = {}
+
+    measureParam = kwargs.get("measure", None)
+    selectedMeasure = None
+    measurements = Measurement.objects.all()
+
+    if measureParam != None:
+        selectedMeasure = Measurement.objects.filter(name=measureParam)[0]
+    elif measurements.count() > 0:
+        selectedMeasure = measurements[0]
+
+    try:
+        limit = float(request.GET.get("limit", None))
+    except:
+        limit = 10
+
+    locations = Location.objects.all()
+    
+    try:
+        start = datetime.fromtimestamp(
+            float(request.GET.get("from", None)) / 1000
+        )
+    except:
+        start = None
+    try:
+        end = datetime.fromtimestamp(
+            float(request.GET.get("to", None)) / 1000)
+    except:
+        end = None
+    if start == None and end == None:
+        start = datetime.now()
+        start = start - dateutil.relativedelta.relativedelta(weeks=1)
+        end = datetime.now()
+        end += dateutil.relativedelta.relativedelta(days=1)
+    elif end == None:
+        end = datetime.now()
+    elif start == None:
+        start = datetime.fromtimestamp(0)
+
+    data = []
+
+    start_ts = int(start.timestamp() * 1000000)
+    end_ts = int(end.timestamp() * 1000000) 
+
+    for location in locations:
+        stations = Station.objects.filter(location=location)
+        locationData = Data.objects.filter(
+            station__in=stations, measurement__name=selectedMeasure.name, time__gte=start_ts, time__lte=end_ts
+        )
+
+        if locationData.count() <= 0:
+            continue
+
+        processed_data = (locationData.annotate(date=Func(F('base_time'), function='DATE'))
+                               .values('date', 'station')
+                               .annotate(min=Min('min_value'), max=Max('max_value'), diff=Max('max_value')-Min('min_value'))
+                               .order_by('-diff')[:limit])
+
+        print(processed_data)
+
+        data.append({
+            'name': f'{location.city.name}, {location.state.name}, {location.country.name}',
+            'lat': location.lat,
+            'lng': location.lng,
+            'population': stations.count(),
+            'top_gaps': [{
+                            'diff': x['diff'],
+                            'min': x['min'],
+                            'max': x['max'],
+                            'date': x['date']
+                        } for x in processed_data]
+        })
+
+    startFormatted = start.strftime("%d/%m/%Y") if start != None else " "
+    endFormatted = end.strftime("%d/%m/%Y") if end != None else " "
+
+    data_result["start"] = startFormatted
+    data_result["end"] = endFormatted
+    data_result["data"] = data
+
+    return JsonResponse(data_result)
 
 class RemaView(TemplateView):
     template_name = "rema.html"
