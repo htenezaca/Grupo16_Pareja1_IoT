@@ -23,8 +23,14 @@
 #define ALERT_DURATION 60
 #define OLED_RESET -1   //   QT-PY / XIAO
  
+const int ANALOG_PIN = A0;
 
-// Declaraciones
+//Constantes del sensor de luminosidad
+const long A = 1000;     //Resistencia en oscuridad en KΩ
+const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
+const int Rc = 10;       //Resistencia calibracion en KΩ
+
+
 
 // Sensor DHT
 DHTesp dht;
@@ -72,6 +78,8 @@ String alert = "";
 float temp;
 // Valor de la medición de la humedad
 float humi;
+// Valor de luminosidad
+float light;
 
 /**
  * Conecta el dispositivo con el bróker MQTT usando
@@ -114,7 +122,8 @@ void mqtt_connect()
 void sendSensorData(float temperatura, float humedad) {
   String data = "{";
   data += "\"temperatura\": "+ String(temperatura, 1) +", ";
-  data += "\"humedad\": "+ String(humedad, 1);
+  data += "\"humedad\": "+ String(humedad, 1) +", ";
+  data += "\"luminosidad\": "+ String(light, 1);
   data += "}";
   char payload[data.length()+1];
   data.toCharArray(payload,data.length()+1);
@@ -156,14 +165,28 @@ float readHumedad() {
   return h;
 }
 
+
+/**
+ * Lee la luminosidad del sensor LDR, la imprime en consola y la devuelve.
+ */
+float readLuminosidad() {
+  // Se lee la luminosidad
+  float V = analogRead(A0);
+  float l = ((long)V*A*10)/((long)B*Rc*(1024-V));
+  Serial.print("Luminosidad: ");
+  Serial.print(l);
+  Serial.println(" %\t");
+
+  return l;
+
 /**
  * Verifica si las variables ingresadas son números válidos.
  * Si no son números válidos, se imprime un mensaje en consola.
  */
-bool checkMeasures(float t, float h) {
+bool checkMeasures(float t, float h, float l) {
   // Se comprueba si ha habido algún error en la lectura
-    if (isnan(t) || isnan(h)) {
-      Serial.println("Error obteniendo los datos del sensor DHT11");
+    if (isnan(t) || isnan(h) || isnan(l)) {
+      Serial.println("Error obteniendo los datos de los sensores");
       return false;
     }
     return true;
@@ -417,11 +440,12 @@ void measure() {
     
     temp = readTemperatura();
     humi = readHumedad();
+    light = readLuminosidad();
 
     // Se chequea si los valores son correctos
-    if (checkMeasures(temp, humi)) {
+    if (checkMeasures(temp, humi, light)) {
       // Se envían los datos
-      sendSensorData(temp, humi); 
+      sendSensorData(temp, humi, light); 
     }
   }
 }
