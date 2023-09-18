@@ -46,23 +46,23 @@ PubSubClient client(net);
 
 // WiFi
 // Nombre de la red WiFi
-const char ssid[] = "WIFI"; // TODO cambiar por el nombre de la red WiFi
+const char ssid[] = "SSID"; // TODO cambiar por el nombre de la red WiFi
 // Contraseña de la red WiFi
 const char pass[] = "PASS"; // TODO cambiar por la contraseña de la red WiFi
 
 //Conexión a Mosquitto
-#define USER "device1" // TODO Reemplace UsuarioMQTT por un usuario (no administrador) que haya creado en la configuración del bróker de MQTT.
-const char MQTT_HOST[] = "44.192.55.161"; // TODO Reemplace ip.maquina.mqtt por la IP del bróker MQTT que usted desplegó. Ej: 192.168.0.1
+#define USER "ironman" // TODO Reemplace UsuarioMQTT por un usuario (no administrador) que haya creado en la configuración del bróker de MQTT.
+const char MQTT_HOST[] = "3.237.179.137"; // TODO Reemplace ip.maquina.mqtt por la IP del bróker MQTT que usted desplegó. Ej: 192.168.0.1
 const int MQTT_PORT = 8082;
-const char MQTT_USER[] = "user1";
+const char MQTT_USER[] = "ironman";
 //Contraseña de MQTT
-const char MQTT_PASS[] = "123456"; // TODO Reemplace ContrasenaMQTT por la contraseña correpondiente al usuario especificado.
+const char MQTT_PASS[] = "jarvis123"; // TODO Reemplace ContrasenaMQTT por la contraseña correpondiente al usuario especificado.
 
 //Tópico al que se recibirán los datos
 // El tópico de publicación debe tener estructura: <país>/<estado>/<ciudad>/<usuario>/out
-const char MQTT_TOPIC_PUB[] = "+/+/+/+/out"; //TODO Reemplace el valor por el tópico de publicación que le corresponde.
+const char MQTT_TOPIC_PUB[] = "colombia/meta/villavicencio/" USER "/out"; //TODO Reemplace el valor por el tópico de publicación que le corresponde.
 // El tópico de suscripción debe tener estructura: <país>/<estado>/<ciudad>/<usuario>/in
-const char MQTT_TOPIC_SUB[] = "pais/estado/ciudad/" USER "/in"; //TODO Reemplace el valor por el tópico de suscripción que le corresponde.
+const char MQTT_TOPIC_SUB[] = "colombia/meta/villavicencio/" USER "/in"; //TODO Reemplace el valor por el tópico de suscripción que le corresponde.
 
 // Declaración de variables globales
 
@@ -97,6 +97,7 @@ void mqtt_connect()
       
       Serial.println("connected.");
       client.subscribe(MQTT_TOPIC_SUB);
+      Serial.println("suscroto.");
       
     } else {
       
@@ -128,11 +129,8 @@ void sendSensorData(float temperatura, float humedad) {
   char payload[data.length()+1];
   data.toCharArray(payload,data.length()+1);
   
-  Serial.println("publish");
-  Serial.println(payload);
-  boolean result = client.publish(MQTT_TOPIC_PUB, payload, false);
-  
-  Serial.println(result);
+  //Serial.println(payload);
+  boolean result = client.publish(MQTT_TOPIC_PUB, payload);
 }
 
 
@@ -144,10 +142,6 @@ float readTemperatura() {
   // Se lee la temperatura en grados centígrados (por defecto)
   float t = dht.getTemperature();
   
-  Serial.print("Temperatura: ");
-  Serial.print(t);
-  Serial.println(" *C ");
-  
   return t;
 }
 
@@ -157,11 +151,6 @@ float readTemperatura() {
 float readHumedad() {
   // Se lee la humedad relativa
   float h = dht.getHumidity();
-  
-  Serial.print("Humedad: ");
-  Serial.print(h);
-  Serial.println(" %\t");
-
   return h;
 }
 
@@ -259,8 +248,8 @@ void displayMessage(String message) {
     display.println("    " + message); 
   } else {
     display.setTextSize(2);
-    display.println("");
-    display.println("");
+    display.print("");
+    display.print("");
     display.println(message); 
   }
 }
@@ -289,6 +278,8 @@ String checkAlert() {
   
   if (alert.length() != 0) {
     message = alert;
+    Serial.print("time: ");
+    Serial.println(millis() - alertTime);
     if ((millis() - alertTime) >= ALERT_DURATION * 1000 ) {
       alert = "";
       alertTime = millis();
@@ -310,9 +301,11 @@ void receivedCallback(char* topic, byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     data += String((char)payload[i]);
   }
-  Serial.print(data);
+  Serial.println(data);
+  Serial.println(data.indexOf("ALERT"));
   if (data.indexOf("ALERT") >= 0) {
     alert = data;
+    alertTime = millis();
   }
 }
 
@@ -435,7 +428,7 @@ void configureMQTT() {
  */
 void measure() {
   if ((millis() - measureTime) >= MEASURE_INTERVAL * 1000 ) {
-    Serial.println("\nMidiendo variables...");
+    //Serial.println("\nMidiendo variables...");
     measureTime = millis();
     
     temp = readTemperatura();
