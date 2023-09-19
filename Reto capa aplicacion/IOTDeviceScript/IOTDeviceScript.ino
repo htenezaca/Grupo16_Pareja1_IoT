@@ -30,8 +30,6 @@ const long A = 1000;     //Resistencia en oscuridad en KΩ
 const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
 const int Rc = 10;       //Resistencia calibracion en KΩ
 
-
-
 // Sensor DHT
 DHTesp dht;
 // Pantalla OLED
@@ -52,7 +50,7 @@ const char pass[] = "PASS"; // TODO cambiar por la contraseña de la red WiFi
 
 //Conexión a Mosquitto
 #define USER "ironman" // TODO Reemplace UsuarioMQTT por un usuario (no administrador) que haya creado en la configuración del bróker de MQTT.
-const char MQTT_HOST[] = "3.237.179.137"; // TODO Reemplace ip.maquina.mqtt por la IP del bróker MQTT que usted desplegó. Ej: 192.168.0.1
+const char MQTT_HOST[] = "44.193.197.89"; // TODO Reemplace ip.maquina.mqtt por la IP del bróker MQTT que usted desplegó. Ej: 192.168.0.1
 const int MQTT_PORT = 8082;
 const char MQTT_USER[] = "ironman";
 //Contraseña de MQTT
@@ -120,7 +118,7 @@ void mqtt_connect()
 /**
  * Publica la temperatura y humedad dadas al tópico configurado usando el cliente MQTT.
  */
-void sendSensorData(float temperatura, float humedad) {
+void sendSensorData(float temperatura, float humedad, float light) {
   String data = "{";
   data += "\"temperatura\": "+ String(temperatura, 1) +", ";
   data += "\"humedad\": "+ String(humedad, 1) +", ";
@@ -154,7 +152,6 @@ float readHumedad() {
   return h;
 }
 
-
 /**
  * Lee la luminosidad del sensor LDR, la imprime en consola y la devuelve.
  */
@@ -167,6 +164,7 @@ float readLuminosidad() {
   Serial.println(" %\t");
 
   return l;
+}
 
 /**
  * Verifica si las variables ingresadas son números válidos.
@@ -231,6 +229,9 @@ void displayMeasures() {
   display.print("H: ");
   display.print(humi);
   display.println("");
+  display.print("L: ");
+  display.print(light);
+  display.println("");
 }
 
 /**
@@ -247,7 +248,7 @@ void displayMessage(String message) {
   if (message.equals("OK")) {
     display.println("    " + message); 
   } else {
-    display.setTextSize(2);
+    display.setTextSize(1);
     display.print("");
     display.print("");
     display.println(message); 
@@ -278,7 +279,6 @@ String checkAlert() {
   
   if (alert.length() != 0) {
     message = alert;
-    Serial.print("time: ");
     Serial.println(millis() - alertTime);
     if ((millis() - alertTime) >= ALERT_DURATION * 1000 ) {
       alert = "";
